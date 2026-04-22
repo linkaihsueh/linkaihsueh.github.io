@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>專案進度追蹤</title>
+  <meta name="theme-color" content="#007aff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="我的專案">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23007aff'/%3E%3Ctext y='.9em' font-size='72' x='12'%3E📋%3C/text%3E%3C/svg%3E">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -36,6 +41,7 @@
       padding: 24px 16px 80px;
     }
 
+    /* ── Header ── */
     .app-header {
       display: flex;
       align-items: center;
@@ -66,6 +72,7 @@
     .btn-add-project:hover { opacity: 0.85; }
     .btn-add-project svg { width: 16px; height: 16px; }
 
+    /* ── Filter bar ── */
     .filter-bar {
       display: flex;
       align-items: center;
@@ -94,162 +101,341 @@
       flex-shrink: 0;
     }
     .filter-pill:hover { opacity: 0.8; }
-    .filter-pill.active { color: #fff; border-color: transparent; }
+    .filter-pill.active {
+      color: #fff;
+      border-color: transparent;
+    }
     .filter-pill.all-pill.active { background: var(--primary); }
     .filter-pill .pill-dot {
-      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
     }
     .filter-pill-manage {
-      display: flex; align-items: center; gap: 5px;
-      padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;
-      white-space: nowrap; cursor: pointer; background: none;
-      border: 1.5px dashed #c7c7cc; color: var(--secondary);
-      transition: all 0.15s; flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      background: none;
+      border: 1.5px dashed #c7c7cc;
+      color: var(--secondary);
+      transition: all 0.15s;
+      flex-shrink: 0;
     }
     .filter-pill-manage:hover { border-color: var(--accent); color: var(--accent); }
 
+    /* ── Section headers ── */
     .section-header {
-      display: flex; align-items: center; gap: 8px;
-      margin-bottom: 10px; padding: 0 4px; cursor: pointer; user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 0 4px;
+      cursor: pointer;
+      user-select: none;
     }
     .section-header h2 {
-      font-size: 13px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.5px; color: var(--secondary);
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--secondary);
     }
     .section-count {
-      font-size: 12px; font-weight: 600; color: var(--secondary);
-      background: rgba(0,0,0,0.06); border-radius: 10px; padding: 1px 7px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--secondary);
+      background: rgba(0,0,0,0.06);
+      border-radius: 10px;
+      padding: 1px 7px;
     }
     .section-toggle {
-      margin-left: auto; color: var(--secondary); font-size: 12px; transition: transform 0.2s;
+      margin-left: auto;
+      color: var(--secondary);
+      font-size: 12px;
+      transition: transform 0.2s;
     }
     .section-toggle.collapsed { transform: rotate(-90deg); }
     .section { margin-bottom: 28px; }
 
-    .project-list { display: flex; flex-direction: column; gap: 8px; }
+    /* ── Project cards ── */
+    .project-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
     .project-list.hidden { display: none; }
 
     .project-card {
-      background: var(--card); border-radius: var(--radius);
-      box-shadow: var(--shadow); border: 1px solid var(--border);
-      overflow: hidden; transition: box-shadow 0.15s; position: relative;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: box-shadow 0.15s;
     }
     .project-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .project-card.completed-card { background: var(--card-completed); opacity: 0.75; }
+    .project-card.completed-card {
+      background: var(--card-completed);
+      opacity: 0.75;
+    }
 
+    /* Category accent bar on left edge */
+    .project-card { position: relative; }
     .category-bar {
-      position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
       border-radius: 12px 0 0 12px;
     }
+
     .project-main {
-      display: flex; align-items: flex-start; gap: 12px;
-      padding: 14px 16px 14px 20px; cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px 14px 20px;
+      cursor: pointer;
     }
+
+    /* Circle checkbox */
     .project-check {
-      width: 22px; height: 22px; border-radius: 50%; border: 2px solid #c7c7cc;
-      background: transparent; cursor: pointer; flex-shrink: 0; margin-top: 1px;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s; position: relative; z-index: 1;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #c7c7cc;
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      position: relative;
+      z-index: 1;
     }
     .project-check:hover { border-color: var(--accent); }
     .project-check.checked { background: var(--green); border-color: var(--green); }
     .project-check.checked::after {
-      content: ''; display: block; width: 6px; height: 10px;
-      border: 2px solid #fff; border-top: none; border-left: none;
+      content: '';
+      display: block;
+      width: 6px;
+      height: 10px;
+      border: 2px solid #fff;
+      border-top: none;
+      border-left: none;
       transform: rotate(45deg) translate(-1px, -1px);
     }
+
     .project-body { flex: 1; min-width: 0; }
-    .project-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .project-title { font-size: 16px; font-weight: 600; line-height: 1.3; color: var(--primary); }
-    .project-title.done { text-decoration: line-through; color: var(--secondary); }
+    .project-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .project-title {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.3;
+      color: var(--primary);
+    }
+    .project-title.done {
+      text-decoration: line-through;
+      color: var(--secondary);
+    }
+    /* Inline category badge on card */
     .cat-badge {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
-      color: #fff; flex-shrink: 0; white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
     .project-latest {
-      font-size: 13px; color: var(--secondary); margin-top: 3px;
-      line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: 13px;
+      color: var(--secondary);
+      margin-top: 3px;
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .project-meta { font-size: 11px; color: #aeaeb2; margin-top: 4px; }
+    .project-meta {
+      font-size: 11px;
+      color: #aeaeb2;
+      margin-top: 4px;
+    }
     .project-chevron {
-      color: #c7c7cc; flex-shrink: 0; margin-top: 3px; transition: transform 0.2s;
+      color: #c7c7cc;
+      flex-shrink: 0;
+      margin-top: 3px;
+      transition: transform 0.2s;
     }
     .project-chevron.open { transform: rotate(90deg); }
 
-    .project-detail { border-top: 1px solid var(--border); background: #fafafa; display: none; }
+    /* ── Expanded detail ── */
+    .project-detail {
+      border-top: 1px solid var(--border);
+      background: #fafafa;
+      display: none;
+    }
     .project-detail.open { display: block; }
 
     .add-progress {
-      display: flex; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
     }
     .add-progress input {
-      flex: 1; background: #f2f2f7; border: 1px solid transparent;
-      border-radius: var(--radius-sm); padding: 8px 12px; font-size: 14px;
-      color: var(--primary); outline: none; transition: border-color 0.15s, background 0.15s;
+      flex: 1;
+      background: #f2f2f7;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      font-size: 14px;
+      color: var(--primary);
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
       font-family: inherit;
     }
     .add-progress input:focus { background: #fff; border-color: var(--accent); }
     .add-progress input::placeholder { color: #aeaeb2; }
     .btn-add-progress {
-      background: var(--accent); color: #fff; border: none;
-      border-radius: var(--radius-sm); padding: 8px 14px; font-size: 13px; font-weight: 600;
-      cursor: pointer; white-space: nowrap; transition: opacity 0.15s; font-family: inherit;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+      font-family: inherit;
     }
     .btn-add-progress:hover { opacity: 0.85; }
 
     .progress-history { padding: 8px 0; }
-    .progress-empty { padding: 12px 16px; font-size: 13px; color: #aeaeb2; text-align: center; }
+    .progress-empty {
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #aeaeb2;
+      text-align: center;
+    }
     .progress-item {
-      display: flex; align-items: flex-start; gap: 12px;
-      padding: 10px 16px; position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 16px;
+      position: relative;
     }
     .progress-item:not(:last-child)::after {
-      content: ''; position: absolute; left: 26px; top: 32px; bottom: 0;
-      width: 1px; background: #e5e5ea;
+      content: '';
+      position: absolute;
+      left: 26px;
+      top: 32px;
+      bottom: 0;
+      width: 1px;
+      background: #e5e5ea;
     }
     .progress-dot {
-      width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
-      flex-shrink: 0; margin-top: 4px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      margin-top: 4px;
     }
     .progress-item:first-child .progress-dot { background: var(--green); }
     .progress-content { flex: 1; min-width: 0; }
     .progress-text { font-size: 14px; color: var(--primary); line-height: 1.45; }
     .progress-time { font-size: 11px; color: #aeaeb2; margin-top: 2px; }
     .btn-delete-progress {
-      background: none; border: none; cursor: pointer; color: #c7c7cc;
-      padding: 2px; border-radius: 4px; transition: color 0.15s;
-      flex-shrink: 0; font-size: 16px; line-height: 1;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #c7c7cc;
+      padding: 2px;
+      border-radius: 4px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+      font-size: 16px;
+      line-height: 1;
     }
     .btn-delete-progress:hover { color: var(--red); }
 
     .project-actions {
-      display: flex; gap: 6px; padding: 10px 16px 12px;
-      border-top: 1px solid var(--border); flex-wrap: wrap;
+      display: flex;
+      gap: 6px;
+      padding: 10px 16px 12px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
     }
     .btn-action {
-      display: flex; align-items: center; gap: 5px; background: none;
-      border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px;
-      font-size: 12px; font-weight: 500; cursor: pointer; color: var(--secondary);
-      transition: all 0.15s; font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--secondary);
+      transition: all 0.15s;
+      font-family: inherit;
     }
     .btn-action:hover { background: #f2f2f7; }
     .btn-action.danger:hover { color: var(--red); border-color: var(--red); background: #fff2f0; }
 
-    .empty-state { text-align: center; padding: 40px 20px; color: var(--secondary); }
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--secondary);
+    }
     .empty-state .emoji { font-size: 40px; margin-bottom: 12px; }
     .empty-state p { font-size: 15px; }
     .empty-state small { font-size: 13px; color: #aeaeb2; margin-top: 4px; display: block; }
 
+    /* ── Modal ── */
     .modal-overlay {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-      z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
     }
     .modal-overlay.open { display: flex; }
     .modal {
-      background: var(--card); border-radius: 16px; padding: 24px;
-      width: 90%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-      animation: slideUp 0.2s ease; max-height: 90vh; overflow-y: auto;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 24px;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: slideUp 0.2s ease;
+      max-height: 90vh;
+      overflow-y: auto;
     }
     @keyframes slideUp {
       from { transform: translateY(20px); opacity: 0; }
@@ -257,84 +443,177 @@
     }
     .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
     .modal-label {
-      font-size: 12px; font-weight: 600; color: var(--secondary);
-      text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 8px;
     }
     .modal input[type="text"] {
-      width: 100%; background: var(--bg); border: 1px solid transparent;
-      border-radius: var(--radius-sm); padding: 10px 14px; font-size: 16px;
-      color: var(--primary); outline: none; margin-bottom: 16px;
-      transition: border-color 0.15s; font-family: inherit;
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 16px;
+      color: var(--primary);
+      outline: none;
+      margin-bottom: 16px;
+      transition: border-color 0.15s;
+      font-family: inherit;
     }
     .modal input[type="text"]:focus { border-color: var(--accent); background: #fff; }
     .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
     .btn-modal {
-      padding: 9px 20px; border-radius: var(--radius-sm); font-size: 15px;
-      font-weight: 600; cursor: pointer; border: none; font-family: inherit;
+      padding: 9px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
     }
     .btn-modal.cancel { background: #f2f2f7; color: var(--secondary); }
     .btn-modal.confirm { background: var(--accent); color: #fff; }
     .btn-modal:hover { opacity: 0.85; }
 
-    .cat-picker { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    /* Category picker in modal */
+    .cat-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
     .cat-pick-item {
-      display: flex; align-items: center; gap: 6px; padding: 6px 14px;
-      border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer;
-      border: 2px solid transparent; background: #f2f2f7; color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 2px solid transparent;
+      background: #f2f2f7;
+      color: var(--primary);
       transition: all 0.15s;
     }
-    .cat-pick-item .cpd { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .cat-pick-item.selected { border-color: var(--primary); background: #fff; }
+    .cat-pick-item .cpd {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .cat-pick-item.selected {
+      border-color: var(--primary);
+      background: #fff;
+    }
     .cat-pick-item.none-item { font-style: italic; color: var(--secondary); }
     .cat-pick-item.none-item.selected { border-color: var(--secondary); }
 
+    /* Manage categories modal */
     .cat-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
     .cat-row {
-      display: flex; align-items: center; gap: 10px; background: #f2f2f7;
-      border-radius: var(--radius-sm); padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f2f2f7;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
     }
-    .cat-row-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .cat-row-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
     .cat-row-name { flex: 1; font-size: 14px; font-weight: 500; }
     .cat-row-count { font-size: 12px; color: var(--secondary); }
     .btn-cat-delete {
-      background: none; border: none; cursor: pointer; color: #c7c7cc;
-      font-size: 18px; line-height: 1; padding: 2px 4px; border-radius: 4px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #c7c7cc;
+      font-size: 18px;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
       transition: color 0.15s;
     }
     .btn-cat-delete:hover { color: var(--red); }
 
-    .add-cat-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+    /* Add category row */
+    .add-cat-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
     .add-cat-row input {
-      flex: 1; background: var(--bg); border: 1px solid transparent;
-      border-radius: var(--radius-sm); padding: 8px 12px; font-size: 14px;
-      outline: none; font-family: inherit; color: var(--primary); margin-bottom: 0 !important;
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+      color: var(--primary);
+      margin-bottom: 0 !important;
     }
     .add-cat-row input:focus { border-color: var(--accent); background: #fff; }
 
-    .color-palette { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    /* Color palette picker */
+    .color-palette {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
     .color-swatch {
-      width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
-      border: 3px solid transparent; transition: transform 0.1s, border-color 0.1s; flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: transform 0.1s, border-color 0.1s;
+      flex-shrink: 0;
     }
     .color-swatch:hover { transform: scale(1.15); }
     .color-swatch.selected { border-color: var(--primary); transform: scale(1.1); }
     .btn-add-cat {
-      background: var(--accent); color: #fff; border: none;
-      border-radius: var(--radius-sm); padding: 8px 14px; font-size: 13px; font-weight: 600;
-      cursor: pointer; white-space: nowrap; font-family: inherit; transition: opacity 0.15s;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      transition: opacity 0.15s;
     }
     .btn-add-cat:hover { opacity: 0.85; }
 
+    /* Staleness */
     .staleness-dot {
-      display: inline-block; width: 7px; height: 7px; border-radius: 50%;
-      margin-right: 5px; vertical-align: middle;
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
     }
     .stale-high { background: #ff3b30; }
     .stale-mid  { background: #ff9500; }
     .stale-low  { background: #34c759; }
     .stale-none { background: #aeaeb2; }
 
-    @media (max-width: 480px) { .app-title { font-size: 22px; } }
+    @media (max-width: 480px) {
+      .app-title { font-size: 22px; }
+    }
   </style>
 </head>
 <body>
@@ -349,8 +628,12 @@
     </button>
   </div>
 
-  <div class="filter-bar" id="filter-bar"></div>
+  <!-- Filter bar -->
+  <div class="filter-bar" id="filter-bar">
+    <!-- rendered by JS -->
+  </div>
 
+  <!-- Completed section -->
   <div class="section" id="section-completed" style="display:none">
     <div class="section-header" onclick="toggleSection('completed')">
       <h2>✅ 已完成</h2>
@@ -360,6 +643,7 @@
     <div class="project-list" id="list-completed"></div>
   </div>
 
+  <!-- Active section -->
   <div class="section">
     <div class="section-header" style="cursor:default">
       <h2>🔥 進行中</h2>
@@ -369,6 +653,7 @@
   </div>
 </div>
 
+<!-- ── Add Project Modal ── -->
 <div class="modal-overlay" id="modal-add">
   <div class="modal">
     <h3>新增專案</h3>
@@ -384,6 +669,7 @@
   </div>
 </div>
 
+<!-- ── Rename Modal ── -->
 <div class="modal-overlay" id="modal-rename">
   <div class="modal">
     <h3>重新命名</h3>
@@ -396,6 +682,7 @@
   </div>
 </div>
 
+<!-- ── Change Category Modal ── -->
 <div class="modal-overlay" id="modal-change-cat">
   <div class="modal">
     <h3>變更分類</h3>
@@ -407,6 +694,7 @@
   </div>
 </div>
 
+<!-- ── Manage Categories Modal ── -->
 <div class="modal-overlay" id="modal-manage-cats">
   <div class="modal">
     <h3>管理分類</h3>
@@ -425,40 +713,60 @@
 </div>
 
 <script>
+// ─── Constants ────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'project-tracker-v2';
-const PALETTE = ['#007aff','#34c759','#ff9500','#ff3b30','#af52de','#ff2d55','#5ac8fa','#ffcc00','#636366'];
+const PALETTE = [
+  '#007aff','#34c759','#ff9500','#ff3b30',
+  '#af52de','#ff2d55','#5ac8fa','#ffcc00','#636366'
+];
 const DEFAULT_CATS = [
-  { id: 'cat-work', name: '工作', color: '#007aff' },
-  { id: 'cat-home', name: '家裡', color: '#34c759' },
-  { id: 'cat-mgmt', name: '管委會', color: '#ff9500' },
+  { id: 'cat-work',  name: '工作',  color: '#007aff' },
+  { id: 'cat-home',  name: '家裡',  color: '#34c759' },
+  { id: 'cat-mgmt',  name: '管委會', color: '#ff9500' },
 ];
 
+// ─── Data ─────────────────────────────────────────────────────────────────────
 function loadAll() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      return { projects: parsed.projects || [], categories: parsed.categories || DEFAULT_CATS.map(c => ({...c})) };
+      return {
+        projects: parsed.projects || [],
+        categories: parsed.categories || DEFAULT_CATS.map(c => ({...c}))
+      };
     }
+    // Migrate from v1
     const v1 = localStorage.getItem('project-tracker-v1');
     const oldProjects = v1 ? JSON.parse(v1) : [];
-    return { projects: oldProjects.map(p => ({ ...p, categoryId: null })), categories: DEFAULT_CATS.map(c => ({...c})) };
-  } catch { return { projects: [], categories: DEFAULT_CATS.map(c => ({...c})) }; }
+    return {
+      projects: oldProjects.map(p => ({ ...p, categoryId: null })),
+      categories: DEFAULT_CATS.map(c => ({...c}))
+    };
+  } catch {
+    return { projects: [], categories: DEFAULT_CATS.map(c => ({...c})) };
+  }
 }
 
-function saveAll() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ projects, categories })); }
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function saveAll() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ projects, categories }));
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
 
 let { projects, categories } = loadAll();
 let expandedIds = new Set();
 let renameTargetId = null;
 let changeCatTargetId = null;
 let completedSectionOpen = true;
-let activeFilter = 'all';
+let activeFilter = 'all'; // 'all' | category id
 let selectedCatInAdd = null;
 let selectedCatInChange = null;
 let newCatColor = PALETTE[0];
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function getCat(id) { return categories.find(c => c.id === id) || null; }
 
 function formatTime(ts) {
@@ -466,39 +774,59 @@ function formatTime(ts) {
   const mins = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
-  if (mins < 1) return '剛剛';
-  if (mins < 60) return mins + ' 分鐘前';
-  if (hours < 24) return hours + ' 小時前';
-  if (days < 7) return days + ' 天前';
+  if (mins < 1)   return '剛剛';
+  if (mins < 60)  return `${mins} 分鐘前`;
+  if (hours < 24) return `${hours} 小時前`;
+  if (days < 7)   return `${days} 天前`;
   return new Date(ts).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' });
 }
 function formatDate(ts) {
-  return new Date(ts).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return new Date(ts).toLocaleString('zh-TW', {
+    month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
 }
-function getUpdatedAt(p) { return p.progress.length > 0 ? p.progress[0].createdAt : p.createdAt; }
+function getUpdatedAt(p) {
+  return p.progress.length > 0 ? p.progress[0].createdAt : p.createdAt;
+}
 function stalenessClass(ts) {
   const days = (Date.now() - ts) / 86400000;
   if (days > 14) return 'stale-high';
-  if (days > 7) return 'stale-mid';
-  if (days > 2) return 'stale-low';
+  if (days > 7)  return 'stale-mid';
+  if (days > 2)  return 'stale-low';
   return 'stale-none';
 }
 function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ─── Render ───────────────────────────────────────────────────────────────────
 function render() {
   renderFilterBar();
-  const filterFn = p => activeFilter === 'all' || p.categoryId === activeFilter;
-  const active = projects.filter(p => !p.completed && filterFn(p)).sort((a, b) => getUpdatedAt(a) - getUpdatedAt(b));
-  const done = projects.filter(p => p.completed && filterFn(p)).sort((a, b) => b.completedAt - a.completedAt);
+  const filterFn = p =>
+    activeFilter === 'all' || p.categoryId === activeFilter;
 
+  const active = projects
+    .filter(p => !p.completed && filterFn(p))
+    .sort((a, b) => getUpdatedAt(a) - getUpdatedAt(b));
+
+  const done = projects
+    .filter(p => p.completed && filterFn(p))
+    .sort((a, b) => b.completedAt - a.completedAt);
+
+  // Active
   const listActive = document.getElementById('list-active');
   document.getElementById('count-active').textContent = active.length;
   listActive.innerHTML = active.length === 0
-    ? '<div class="empty-state"><div class="emoji">' + (activeFilter === 'all' ? '🌱' : '📂') + '</div><p>' + (activeFilter === 'all' ? '還沒有進行中的專案' : '這個分類沒有進行中的專案') + '</p><small>點擊右上角「新增專案」開始吧！</small></div>'
+    ? `<div class="empty-state">
+         <div class="emoji">${activeFilter === 'all' ? '🌱' : '📂'}</div>
+         <p>${activeFilter === 'all' ? '還沒有進行中的專案' : '這個分類沒有進行中的專案'}</p>
+         <small>點擊右上角「新增專案」開始吧！</small>
+       </div>`
     : active.map(renderCard).join('');
 
+  // Completed
   const sectionCompleted = document.getElementById('section-completed');
   const listCompleted = document.getElementById('list-completed');
   document.getElementById('count-completed').textContent = done.length;
@@ -508,22 +836,27 @@ function render() {
     sectionCompleted.style.display = 'block';
     listCompleted.innerHTML = done.map(renderCard).join('');
     listCompleted.className = 'project-list' + (completedSectionOpen ? '' : ' hidden');
-    document.getElementById('toggle-completed').className = 'section-toggle' + (completedSectionOpen ? '' : ' collapsed');
+    document.getElementById('toggle-completed').className =
+      'section-toggle' + (completedSectionOpen ? '' : ' collapsed');
   }
 }
 
 function renderFilterBar() {
   const bar = document.getElementById('filter-bar');
   const allActive = activeFilter === 'all';
-  let html = '<button class="filter-pill all-pill ' + (allActive ? 'active' : '') + '" onclick="setFilter('all')">全部</button>';
+  let html = `<button class="filter-pill all-pill ${allActive ? 'active' : ''}"
+    onclick="setFilter('all')">全部</button>`;
   for (const c of categories) {
     const isActive = activeFilter === c.id;
     const count = projects.filter(p => !p.completed && p.categoryId === c.id).length;
-    html += '<button class="filter-pill ' + (isActive ? 'active' : '') + '" style="' + (isActive ? 'background:' + c.color : '') + '" onclick="setFilter('' + c.id + '')">';
-    html += '<span class="pill-dot" style="background:' + c.color + ';' + (isActive ? 'background:#fff5' : '') + '"></span>';
-    html += escHtml(c.name) + (count > 0 ? ' <span style="opacity:.7">' + count + '</span>' : '') + '</button>';
+    html += `<button class="filter-pill ${isActive ? 'active' : ''}"
+      style="${isActive ? `background:${c.color}` : ''}"
+      onclick="setFilter('${c.id}')">
+      <span class="pill-dot" style="background:${c.color};${isActive ? 'background:#fff5' : ''}"></span>
+      ${escHtml(c.name)}${count > 0 ? ` <span style="opacity:.7">${count}</span>` : ''}
+    </button>`;
   }
-  html += '<button class="filter-pill-manage" onclick="openManageCats()">⚙️ 管理分類</button>';
+  html += `<button class="filter-pill-manage" onclick="openManageCats()">⚙️ 管理分類</button>`;
   bar.innerHTML = html;
 }
 
@@ -533,23 +866,88 @@ function renderCard(p) {
   const updatedAt = getUpdatedAt(p);
   const sc = p.completed ? 'stale-none' : stalenessClass(updatedAt);
   const cat = getCat(p.categoryId);
-  const latestText = lastProgress ? escHtml(lastProgress.text) : '<span style="color:#aeaeb2">尚無進度紀錄</span>';
-  const catBarHtml = cat ? '<div class="category-bar" style="background:' + cat.color + '"></div>' : '';
-  const catBadgeHtml = cat ? '<span class="cat-badge" style="background:' + cat.color + '">' + escHtml(cat.name) + '</span>' : '';
+
+  const latestText = lastProgress
+    ? escHtml(lastProgress.text)
+    : '<span style="color:#aeaeb2">尚無進度紀錄</span>';
+
+  const catBarHtml = cat
+    ? `<div class="category-bar" style="background:${cat.color}"></div>` : '';
+
+  const catBadgeHtml = cat
+    ? `<span class="cat-badge" style="background:${cat.color}">${escHtml(cat.name)}</span>` : '';
+
   const historyHtml = p.progress.length === 0
-    ? '<div class="progress-empty">尚無進度紀錄，新增第一筆吧！</div>'
-    : p.progress.map(prog => '<div class="progress-item"><div class="progress-dot"></div><div class="progress-content"><div class="progress-text">' + escHtml(prog.text) + '</div><div class="progress-time">' + formatDate(prog.createdAt) + '</div></div>' + (!p.completed ? '<button class="btn-delete-progress" onclick="deleteProgress('' + p.id + '','' + prog.id + '',event)" title="刪除">×</button>' : '') + '</div>').join('');
-  const detailHtml = isExpanded
-    ? '<div class="project-detail open" id="detail-' + p.id + '">' + (!p.completed ? '<div class="add-progress"><input type="text" id="input-progress-' + p.id + '" placeholder="新增進度更新…" maxlength="200" onkeydown="if(event.key==='Enter') addProgress('' + p.id + '')"><button class="btn-add-progress" onclick="addProgress('' + p.id + '')">新增</button></div>' : '') + '<div class="progress-history">' + historyHtml + '</div><div class="project-actions"><button class="btn-action" onclick="openRenameModal('' + p.id + '',event)">✏️ 重新命名</button><button class="btn-action" onclick="openChangeCat('' + p.id + '',event)">🏷️ ' + (cat ? '變更' : '設定') + '分類</button>' + (p.completed ? '<button class="btn-action" onclick="uncompleteProject('' + p.id + '',event)">↩️ 重啟</button>' : '') + '<button class="btn-action danger" onclick="deleteProject('' + p.id + '',event)">🗑️ 刪除</button></div></div>'
-    : '<div class="project-detail" id="detail-' + p.id + '"></div>';
-  return '<div class="project-card ' + (p.completed ? 'completed-card' : '') + '" id="card-' + p.id + '">' + catBarHtml + '<div class="project-main" onclick="toggleExpand('' + p.id + '')">' + '<div class="project-check ' + (p.completed ? 'checked' : '') + '" onclick="toggleComplete('' + p.id + '',event)"></div>' + '<div class="project-body"><div class="project-title-row"><div class="project-title ' + (p.completed ? 'done' : '') + '">' + escHtml(p.title) + '</div>' + catBadgeHtml + '</div><div class="project-latest">' + latestText + '</div><div class="project-meta"><span class="staleness-dot ' + sc + '"></span>' + (p.completed ? '完成於 ' + formatTime(p.completedAt) : '上次更新：' + formatTime(updatedAt)) + '</div></div>' + '<svg class="project-chevron ' + (isExpanded ? 'open' : '') + '" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>' + detailHtml + '</div>';
+    ? `<div class="progress-empty">尚無進度紀錄，新增第一筆吧！</div>`
+    : p.progress.map(prog => `
+        <div class="progress-item">
+          <div class="progress-dot"></div>
+          <div class="progress-content">
+            <div class="progress-text">${escHtml(prog.text)}</div>
+            <div class="progress-time">${formatDate(prog.createdAt)}</div>
+          </div>
+          ${!p.completed ? `<button class="btn-delete-progress"
+            onclick="deleteProgress('${p.id}','${prog.id}',event)" title="刪除">×</button>` : ''}
+        </div>`).join('');
+
+  const detailHtml = isExpanded ? `
+    <div class="project-detail open" id="detail-${p.id}">
+      ${!p.completed ? `
+      <div class="add-progress">
+        <input type="text" id="input-progress-${p.id}" placeholder="新增進度更新…" maxlength="200"
+               onkeydown="if(event.key==='Enter') addProgress('${p.id}')">
+        <button class="btn-add-progress" onclick="addProgress('${p.id}')">新增</button>
+      </div>` : ''}
+      <div class="progress-history">${historyHtml}</div>
+      <div class="project-actions">
+        <button class="btn-action" onclick="openRenameModal('${p.id}',event)">✏️ 重新命名</button>
+        <button class="btn-action" onclick="openChangeCat('${p.id}',event)">🏷️ ${cat ? '變更' : '設定'}分類</button>
+        ${p.completed
+          ? `<button class="btn-action" onclick="uncompleteProject('${p.id}',event)">↩️ 重啟</button>`
+          : ''}
+        <button class="btn-action danger" onclick="deleteProject('${p.id}',event)">🗑️ 刪除</button>
+      </div>
+    </div>` : `<div class="project-detail" id="detail-${p.id}"></div>`;
+
+  return `
+    <div class="project-card ${p.completed ? 'completed-card' : ''}" id="card-${p.id}">
+      ${catBarHtml}
+      <div class="project-main" onclick="toggleExpand('${p.id}')">
+        <div class="project-check ${p.completed ? 'checked' : ''}"
+             onclick="toggleComplete('${p.id}',event)"></div>
+        <div class="project-body">
+          <div class="project-title-row">
+            <div class="project-title ${p.completed ? 'done' : ''}">${escHtml(p.title)}</div>
+            ${catBadgeHtml}
+          </div>
+          <div class="project-latest">${latestText}</div>
+          <div class="project-meta">
+            <span class="staleness-dot ${sc}"></span>
+            ${p.completed ? `完成於 ${formatTime(p.completedAt)}` : `上次更新：${formatTime(updatedAt)}`}
+          </div>
+        </div>
+        <svg class="project-chevron ${isExpanded ? 'open' : ''}" width="16" height="16"
+             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </div>
+      ${detailHtml}
+    </div>`;
 }
 
+// ─── Category picker HTML ──────────────────────────────────────────────────────
 function buildCatPicker(containerId, selectedId) {
   const container = document.getElementById(containerId);
-  let html = '<div class="cat-pick-item none-item ' + (!selectedId ? 'selected' : '') + '" onclick="selectCatInPicker('' + containerId + '', null)"><span>無分類</span></div>';
+  let html = `<div class="cat-pick-item none-item ${!selectedId ? 'selected' : ''}"
+    onclick="selectCatInPicker('${containerId}', null)">
+    <span>無分類</span>
+  </div>`;
   for (const c of categories) {
-    html += '<div class="cat-pick-item ' + (selectedId === c.id ? 'selected' : '') + '" onclick="selectCatInPicker('' + containerId + '', '' + c.id + '')"><span class="cpd" style="background:' + c.color + '"></span>' + escHtml(c.name) + '</div>';
+    html += `<div class="cat-pick-item ${selectedId === c.id ? 'selected' : ''}"
+      onclick="selectCatInPicker('${containerId}', '${c.id}')">
+      <span class="cpd" style="background:${c.color}"></span>
+      ${escHtml(c.name)}
+    </div>`;
   }
   container.innerHTML = html;
 }
@@ -557,59 +955,98 @@ function buildCatPicker(containerId, selectedId) {
 function selectCatInPicker(containerId, catId) {
   if (containerId === 'picker-add') selectedCatInAdd = catId;
   if (containerId === 'picker-change') selectedCatInChange = catId;
+  // Update UI
   const container = document.getElementById(containerId);
-  container.querySelectorAll('.cat-pick-item').forEach(el => el.classList.remove('selected'));
+  container.querySelectorAll('.cat-pick-item').forEach(el => {
+    el.classList.remove('selected');
+  });
+  // find clicked
   const items = container.querySelectorAll('.cat-pick-item');
   const cats = [null, ...categories.map(c => c.id)];
   const idx = cats.indexOf(catId);
   if (idx >= 0 && items[idx]) items[idx].classList.add('selected');
 }
 
-function setFilter(id) { activeFilter = id; render(); }
+// ─── Actions ──────────────────────────────────────────────────────────────────
+function setFilter(id) {
+  activeFilter = id;
+  render();
+}
+
 function toggleExpand(id) {
-  if (expandedIds.has(id)) expandedIds.delete(id); else expandedIds.add(id);
+  if (expandedIds.has(id)) expandedIds.delete(id);
+  else expandedIds.add(id);
   render();
   const p = projects.find(x => x.id === id);
-  if (p && !p.completed && expandedIds.has(id)) setTimeout(() => { const input = document.getElementById('input-progress-' + id); if (input) input.focus(); }, 50);
+  if (p && !p.completed && expandedIds.has(id)) {
+    setTimeout(() => {
+      const input = document.getElementById(`input-progress-${id}`);
+      if (input) input.focus();
+    }, 50);
+  }
 }
+
 function toggleComplete(id, e) {
   e.stopPropagation();
   const p = projects.find(x => x.id === id);
   if (!p || p.completed) return;
-  p.completed = true; p.completedAt = Date.now();
-  expandedIds.delete(id); saveAll(); render();
+  p.completed = true;
+  p.completedAt = Date.now();
+  expandedIds.delete(id);
+  saveAll(); render();
 }
+
 function uncompleteProject(id, e) {
   e.stopPropagation();
   const p = projects.find(x => x.id === id);
   if (!p) return;
-  p.completed = false; p.completedAt = null; saveAll(); render();
+  p.completed = false;
+  p.completedAt = null;
+  saveAll(); render();
 }
+
 function deleteProject(id, e) {
   e.stopPropagation();
   const p = projects.find(x => x.id === id);
-  if (!p || !confirm('確定要刪除「' + p.title + '」嗎？')) return;
-  projects = projects.filter(x => x.id !== id); expandedIds.delete(id); saveAll(); render();
+  if (!p || !confirm(`確定要刪除「${p.title}」嗎？`)) return;
+  projects = projects.filter(x => x.id !== id);
+  expandedIds.delete(id);
+  saveAll(); render();
 }
+
 function addProgress(id) {
-  const input = document.getElementById('input-progress-' + id);
+  const input = document.getElementById(`input-progress-${id}`);
   if (!input) return;
   const text = input.value.trim();
   if (!text) return;
   const p = projects.find(x => x.id === id);
   if (!p) return;
   p.progress.unshift({ id: uid(), text, createdAt: Date.now() });
-  saveAll(); input.value = ''; render();
-  setTimeout(() => { const el = document.getElementById('input-progress-' + id); if (el) el.focus(); }, 50);
+  saveAll();
+  input.value = '';
+  render();
+  setTimeout(() => {
+    const el = document.getElementById(`input-progress-${id}`);
+    if (el) el.focus();
+  }, 50);
 }
+
 function deleteProgress(projectId, progressId, e) {
   e.stopPropagation();
   const p = projects.find(x => x.id === projectId);
   if (!p) return;
-  p.progress = p.progress.filter(x => x.id !== progressId); saveAll(); render();
+  p.progress = p.progress.filter(x => x.id !== progressId);
+  saveAll(); render();
 }
-function toggleSection(section) { if (section === 'completed') { completedSectionOpen = !completedSectionOpen; render(); } }
 
+function toggleSection(section) {
+  if (section === 'completed') {
+    completedSectionOpen = !completedSectionOpen;
+    render();
+  }
+}
+
+// ─── Modals ───────────────────────────────────────────────────────────────────
 function openAddModal() {
   selectedCatInAdd = null;
   document.getElementById('input-new-project').value = '';
@@ -620,13 +1057,27 @@ function openAddModal() {
 function confirmAdd() {
   const title = document.getElementById('input-new-project').value.trim();
   if (!title) return;
-  projects.push({ id: uid(), title, categoryId: selectedCatInAdd, completed: false, completedAt: null, createdAt: Date.now(), progress: [] });
-  saveAll(); closeModal('modal-add'); render();
+  projects.push({
+    id: uid(),
+    title,
+    categoryId: selectedCatInAdd,
+    completed: false,
+    completedAt: null,
+    createdAt: Date.now(),
+    progress: []
+  });
+  saveAll();
+  closeModal('modal-add');
+  render();
 }
+
 function openRenameModal(id, e) {
-  e.stopPropagation(); renameTargetId = id;
-  const p = projects.find(x => x.id === id); if (!p) return;
-  const input = document.getElementById('input-rename'); input.value = p.title;
+  e.stopPropagation();
+  renameTargetId = id;
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  const input = document.getElementById('input-rename');
+  input.value = p.title;
   document.getElementById('modal-rename').classList.add('open');
   setTimeout(() => { input.focus(); input.select(); }, 100);
 }
@@ -637,9 +1088,12 @@ function confirmRename() {
   if (p) { p.title = title; saveAll(); render(); }
   closeModal('modal-rename');
 }
+
 function openChangeCat(id, e) {
-  e.stopPropagation(); changeCatTargetId = id;
-  const p = projects.find(x => x.id === id); if (!p) return;
+  e.stopPropagation();
+  changeCatTargetId = id;
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
   selectedCatInChange = p.categoryId;
   buildCatPicker('picker-change', p.categoryId);
   document.getElementById('modal-change-cat').classList.add('open');
@@ -649,49 +1103,91 @@ function confirmChangeCat() {
   if (p) { p.categoryId = selectedCatInChange; saveAll(); render(); }
   closeModal('modal-change-cat');
 }
-function openManageCats() { renderManageCats(); document.getElementById('modal-manage-cats').classList.add('open'); }
+
+function openManageCats() {
+  renderManageCats();
+  document.getElementById('modal-manage-cats').classList.add('open');
+}
 function renderManageCats() {
+  // Category list
   const list = document.getElementById('manage-cat-list');
   if (categories.length === 0) {
     list.innerHTML = '<div style="font-size:13px;color:#aeaeb2;text-align:center;padding:8px">還沒有分類</div>';
   } else {
     list.innerHTML = categories.map(c => {
       const count = projects.filter(p => p.categoryId === c.id).length;
-      return '<div class="cat-row"><div class="cat-row-dot" style="background:' + c.color + '"></div><div class="cat-row-name">' + escHtml(c.name) + '</div><div class="cat-row-count">' + count + ' 個專案</div><button class="btn-cat-delete" onclick="deleteCat('' + c.id + '')" title="刪除">×</button></div>';
+      return `<div class="cat-row">
+        <div class="cat-row-dot" style="background:${c.color}"></div>
+        <div class="cat-row-name">${escHtml(c.name)}</div>
+        <div class="cat-row-count">${count} 個專案</div>
+        <button class="btn-cat-delete" onclick="deleteCat('${c.id}')" title="刪除">×</button>
+      </div>`;
     }).join('');
   }
+
+  // Color palette
   const palette = document.getElementById('new-cat-palette');
-  palette.innerHTML = PALETTE.map(color => '<div class="color-swatch ' + (color === newCatColor ? 'selected' : '') + '" style="background:' + color + '" onclick="selectNewCatColor('' + color + '')"></div>').join('');
+  palette.innerHTML = PALETTE.map(color => `
+    <div class="color-swatch ${color === newCatColor ? 'selected' : ''}"
+         style="background:${color}"
+         onclick="selectNewCatColor('${color}')"></div>`).join('');
 }
+
 function selectNewCatColor(color) {
   newCatColor = color;
-  document.querySelectorAll('#new-cat-palette .color-swatch').forEach(el => el.classList.toggle('selected', el.style.background === color));
+  document.querySelectorAll('#new-cat-palette .color-swatch').forEach(el => {
+    el.classList.toggle('selected', el.style.background === color);
+  });
 }
+
 function confirmAddCat() {
   const name = document.getElementById('input-new-cat').value.trim();
   if (!name) return;
-  if (categories.find(c => c.name === name)) { alert('已有相同名稱的分類！'); return; }
-  categories.push({ id: uid(), name, color: newCatColor }); saveAll();
-  document.getElementById('input-new-cat').value = ''; renderManageCats(); render();
+  if (categories.find(c => c.name === name)) {
+    alert('已有相同名稱的分類！');
+    return;
+  }
+  categories.push({ id: uid(), name, color: newCatColor });
+  saveAll();
+  document.getElementById('input-new-cat').value = '';
+  renderManageCats();
+  render();
 }
+
 function deleteCat(id) {
-  const c = categories.find(x => x.id === id); if (!c) return;
+  const c = categories.find(x => x.id === id);
+  if (!c) return;
   const count = projects.filter(p => p.categoryId === id).length;
-  const msg = count > 0 ? '刪除「' + c.name + '」分類後，' + count + ' 個專案將變為無分類。確定嗎？' : '確定刪除「' + c.name + '」分類嗎？';
+  const msg = count > 0
+    ? `刪除「${c.name}」分類後，${count} 個專案將變為無分類。確定嗎？`
+    : `確定刪除「${c.name}」分類嗎？`;
   if (!confirm(msg)) return;
   categories = categories.filter(x => x.id !== id);
   projects.forEach(p => { if (p.categoryId === id) p.categoryId = null; });
   if (activeFilter === id) activeFilter = 'all';
-  saveAll(); renderManageCats(); render();
+  saveAll();
+  renderManageCats();
+  render();
 }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
 
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
 });
 
+// ─── Init ─────────────────────────────────────────────────────────────────────
 render();
 setInterval(render, 60000);
+
+// ─── Service Worker ───────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
