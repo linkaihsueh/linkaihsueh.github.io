@@ -659,7 +659,7 @@
     <h3>新增專案</h3>
     <div class="modal-label">專案名稱</div>
     <input type="text" id="input-new-project" placeholder="例如：整理車庫" maxlength="80"
-           onkeydown="if(event.key==='Enter') confirmAdd()">
+           onkeydown="if(event.key==='Enter' && !event.isComposing) confirmAdd()">
     <div class="modal-label">選擇分類</div>
     <div class="cat-picker" id="picker-add"></div>
     <div class="modal-actions">
@@ -674,7 +674,7 @@
   <div class="modal">
     <h3>重新命名</h3>
     <input type="text" id="input-rename" placeholder="新名稱" maxlength="80"
-           onkeydown="if(event.key==='Enter') confirmRename()">
+           onkeydown="if(event.key==='Enter' && !event.isComposing) confirmRename()">
     <div class="modal-actions">
       <button class="btn-modal cancel" onclick="closeModal('modal-rename')">取消</button>
       <button class="btn-modal confirm" onclick="confirmRename()">確認</button>
@@ -703,7 +703,7 @@
     <div class="color-palette" id="new-cat-palette"></div>
     <div class="add-cat-row">
       <input type="text" id="input-new-cat" placeholder="分類名稱" maxlength="20"
-             onkeydown="if(event.key==='Enter') confirmAddCat()">
+             onkeydown="if(event.key==='Enter' && !event.isComposing) confirmAddCat()">
       <button class="btn-add-cat" onclick="confirmAddCat()">新增</button>
     </div>
     <div class="modal-actions">
@@ -895,7 +895,7 @@ function renderCard(p) {
       ${!p.completed ? `
       <div class="add-progress">
         <input type="text" id="input-progress-${p.id}" placeholder="新增進度更新…" maxlength="200"
-               onkeydown="if(event.key==='Enter') addProgress('${p.id}')">
+               onkeydown="if(event.key==='Enter' && !event.isComposing) addProgress('${p.id}')">
         <button class="btn-add-progress" onclick="addProgress('${p.id}')">新增</button>
       </div>` : ''}
       <div class="progress-history">${historyHtml}</div>
