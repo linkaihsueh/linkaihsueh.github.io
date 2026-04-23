@@ -611,6 +611,105 @@
     .stale-low  { background: #34c759; }
     .stale-none { background: #aeaeb2; }
 
+    /* ── Uncategorized pill & share button ── */
+    .filter-pill.uncat-pill.active { background: #636366; }
+    .filter-pill-share {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      background: none;
+      border: 1.5px solid #34c759;
+      color: #34c759;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .filter-pill-share:hover { background: #34c759; color: #fff; }
+
+    /* ── Share modal ── */
+    .share-url-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: stretch;
+    }
+    .share-url-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--secondary);
+      outline: none;
+      font-family: monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: text;
+      min-width: 0;
+    }
+    .btn-copy-share {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      transition: opacity 0.15s;
+      flex-shrink: 0;
+    }
+    .btn-copy-share:hover { opacity: 0.85; }
+    .share-note { font-size: 12px; color: #aeaeb2; line-height: 1.5; }
+
+    /* ── Shared (read-only) view ── */
+    .share-header { margin-bottom: 20px; padding: 0 4px; }
+    .share-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+    .share-cat-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .share-title { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+    .share-badge {
+      font-size: 11px;
+      font-weight: 600;
+      background: #f2f2f7;
+      color: var(--secondary);
+      padding: 3px 9px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .share-meta { font-size: 12px; color: #aeaeb2; }
+    .share-readonly-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff9ec;
+      border: 1px solid #ffcc00;
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #6b5900;
+    }
+
     @media (max-width: 480px) {
       .app-title { font-size: 22px; }
     }
@@ -712,6 +811,26 @@
   </div>
 </div>
 
+<!-- ── Share Modal ── -->
+<div class="modal-overlay" id="modal-share">
+  <div class="modal">
+    <h3>📤 分享連結</h3>
+    <p style="font-size:13px;color:var(--secondary);margin-bottom:16px">
+      目前篩選的專案快照將編碼進連結，任何人開啟都能查看（唯讀），不需登入。
+    </p>
+    <div class="modal-label">分享連結</div>
+    <div class="share-url-row">
+      <input type="text" id="share-url-input" class="share-url-input" readonly
+             onclick="this.select()">
+      <button class="btn-copy-share" id="btn-copy-share" onclick="copyShareUrl()">📋 複製</button>
+    </div>
+    <div class="share-note">⚠️ 此為靜態快照，不會隨資料更新而同步。若需更新請重新產生連結。</div>
+    <div class="modal-actions">
+      <button class="btn-modal cancel" onclick="closeModal('modal-share')">關閉</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'project-tracker-v2';
@@ -805,7 +924,9 @@ function escHtml(s) {
 function render() {
   renderFilterBar();
   const filterFn = p =>
-    activeFilter === 'all' || p.categoryId === activeFilter;
+    activeFilter === 'all'          ? true
+    : activeFilter === 'uncategorized' ? p.categoryId === null
+    : p.categoryId === activeFilter;
 
   const active = projects
     .filter(p => !p.completed && filterFn(p))
@@ -818,10 +939,14 @@ function render() {
   // Active
   const listActive = document.getElementById('list-active');
   document.getElementById('count-active').textContent = active.length;
+  const emptyMsg =
+    activeFilter === 'all'           ? '還沒有進行中的專案'
+    : activeFilter === 'uncategorized' ? '沒有未分類的進行中專案'
+    : '這個分類沒有進行中的專案';
   listActive.innerHTML = active.length === 0
     ? `<div class="empty-state">
          <div class="emoji">${activeFilter === 'all' ? '🌱' : '📂'}</div>
-         <p>${activeFilter === 'all' ? '還沒有進行中的專案' : '這個分類沒有進行中的專案'}</p>
+         <p>${emptyMsg}</p>
          <small>點擊右上角「新增專案」開始吧！</small>
        </div>`
     : active.map(renderCard).join('');
@@ -856,7 +981,20 @@ function renderFilterBar() {
       ${escHtml(c.name)}${count > 0 ? ` <span style="opacity:.7">${count}</span>` : ''}
     </button>`;
   }
+  // 未分類 pill（只要有任何未分類專案就顯示）
+  const uncatProjects = projects.filter(p => p.categoryId === null);
+  if (uncatProjects.length > 0) {
+    const isUncatActive = activeFilter === 'uncategorized';
+    const uncatActive = uncatProjects.filter(p => !p.completed).length;
+    html += `<button class="filter-pill uncat-pill ${isUncatActive ? 'active' : ''}"
+      style="${isUncatActive ? 'background:#636366' : ''}"
+      onclick="setFilter('uncategorized')">
+      <span class="pill-dot" style="background:#636366;${isUncatActive ? 'opacity:.5' : ''}"></span>
+      未分類${uncatActive > 0 ? ` <span style="opacity:.7">${uncatActive}</span>` : ''}
+    </button>`;
+  }
   html += `<button class="filter-pill-manage" onclick="openManageCats()">⚙️ 管理分類</button>`;
+  html += `<button class="filter-pill-share" onclick="openShareModal()">📤 分享</button>`;
   bar.innerHTML = html;
 }
 
@@ -1180,9 +1318,182 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   });
 });
 
+// ─── Share / Export ───────────────────────────────────────────────────────────
+function generateShareData(filterId) {
+  let catName, catColor;
+  if (filterId === 'all') {
+    catName = '全部專案'; catColor = '#1c1c1e';
+  } else if (filterId === 'uncategorized') {
+    catName = '未分類專案'; catColor = '#636366';
+  } else {
+    const cat = getCat(filterId);
+    catName = cat ? cat.name : '未知分類';
+    catColor = cat ? cat.color : '#8e8e93';
+  }
+  const fn = p =>
+    filterId === 'all'           ? true
+    : filterId === 'uncategorized' ? p.categoryId === null
+    : p.categoryId === filterId;
+
+  // Build category lookup for included projects
+  const catMap = {};
+  for (const c of categories) catMap[c.id] = { name: c.name, color: c.color };
+
+  return {
+    v: 1,
+    catName, catColor,
+    exportedAt: Date.now(),
+    categories: catMap,
+    projects: projects.filter(fn).map(p => ({
+      title: p.title,
+      completed: p.completed,
+      completedAt: p.completedAt,
+      createdAt: p.createdAt,
+      categoryId: p.categoryId,
+      progress: p.progress
+    }))
+  };
+}
+
+function openShareModal() {
+  const data = generateShareData(activeFilter);
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const url = `${location.origin}${location.pathname}?share=${encoded}`;
+  document.getElementById('share-url-input').value = url;
+  document.getElementById('btn-copy-share').textContent = '📋 複製';
+  document.getElementById('modal-share').classList.add('open');
+  setTimeout(() => document.getElementById('share-url-input').select(), 100);
+}
+
+function copyShareUrl() {
+  const input = document.getElementById('share-url-input');
+  input.select();
+  navigator.clipboard.writeText(input.value).then(() => {
+    const btn = document.getElementById('btn-copy-share');
+    btn.textContent = '✅ 已複製！';
+    setTimeout(() => btn.textContent = '📋 複製', 2500);
+  }).catch(() => {
+    document.execCommand('copy');
+  });
+}
+
+// ─── Shared read-only view ────────────────────────────────────────────────────
+function checkSharedView() {
+  const params = new URLSearchParams(location.search);
+  const encoded = params.get('share');
+  if (!encoded) return false;
+  try {
+    const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    renderSharedView(data);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function renderSharedView(data) {
+  document.title = `${data.catName} — 專案進度`;
+  const active = data.projects.filter(p => !p.completed);
+  const done   = data.projects.filter(p => p.completed);
+
+  const activeHtml = active.length === 0 ? '' : `
+    <div class="section">
+      <div class="section-header" style="cursor:default">
+        <h2>🔥 進行中</h2>
+        <span class="section-count">${active.length}</span>
+      </div>
+      <div class="project-list">${active.map(p => renderSharedCard(p, data.categories)).join('')}</div>
+    </div>`;
+
+  const doneHtml = done.length === 0 ? '' : `
+    <div class="section">
+      <div class="section-header" style="cursor:default">
+        <h2>✅ 已完成</h2>
+        <span class="section-count">${done.length}</span>
+      </div>
+      <div class="project-list">${done.map(p => renderSharedCard(p, data.categories)).join('')}</div>
+    </div>`;
+
+  const emptyHtml = data.projects.length === 0
+    ? '<div class="empty-state"><div class="emoji">📭</div><p>此分類沒有專案</p></div>' : '';
+
+  document.body.innerHTML = `
+    <div class="app">
+      <div class="share-header">
+        <div class="share-title-row">
+          <span class="share-cat-dot" style="background:${data.catColor}"></span>
+          <h1 class="share-title">${escHtml(data.catName)}</h1>
+          <span class="share-badge">唯讀快照</span>
+        </div>
+        <div class="share-meta">匯出時間：${new Date(data.exportedAt).toLocaleString('zh-TW')}</div>
+      </div>
+      <div class="share-readonly-bar">
+        📌 這是靜態分享頁面，內容為匯出當下的快照，無法編輯。
+      </div>
+      ${activeHtml}${doneHtml}${emptyHtml}
+    </div>`;
+}
+
+function renderSharedCard(p, catMap) {
+  const cat = p.categoryId && catMap[p.categoryId] ? catMap[p.categoryId] : null;
+  const catBar    = cat ? `<div class="category-bar" style="background:${cat.color}"></div>` : '';
+  const catBadge  = cat ? `<span class="cat-badge" style="background:${cat.color}">${escHtml(cat.name)}</span>` : '';
+  const lastProg  = p.progress && p.progress[0];
+  const latestTxt = lastProg ? escHtml(lastProg.text) : '<span style="color:#aeaeb2">尚無進度紀錄</span>';
+  const updatedAt = (p.progress && p.progress.length > 0) ? p.progress[0].createdAt : p.createdAt;
+  const sc        = p.completed ? 'stale-none' : stalenessClass(updatedAt);
+
+  const historyHtml = (!p.progress || p.progress.length === 0)
+    ? `<div class="progress-empty">尚無進度紀錄</div>`
+    : p.progress.map(pg => `
+        <div class="progress-item">
+          <div class="progress-dot"></div>
+          <div class="progress-content">
+            <div class="progress-text">${escHtml(pg.text)}</div>
+            <div class="progress-time">${formatDate(pg.createdAt)}</div>
+          </div>
+        </div>`).join('');
+
+  const cid = 'sc' + Math.random().toString(36).slice(2, 8);
+  return `
+    <div class="project-card ${p.completed ? 'completed-card' : ''}" id="${cid}">
+      ${catBar}
+      <div class="project-main" onclick="toggleSharedCard('${cid}')">
+        <div class="project-check ${p.completed ? 'checked' : ''}" style="pointer-events:none;cursor:default"></div>
+        <div class="project-body">
+          <div class="project-title-row">
+            <div class="project-title ${p.completed ? 'done' : ''}">${escHtml(p.title)}</div>
+            ${catBadge}
+          </div>
+          <div class="project-latest">${latestTxt}</div>
+          <div class="project-meta">
+            <span class="staleness-dot ${sc}"></span>
+            ${p.completed ? `完成於 ${formatTime(p.completedAt)}` : `上次更新：${formatTime(updatedAt)}`}
+          </div>
+        </div>
+        <svg class="project-chevron" id="chev-${cid}" width="16" height="16"
+             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </div>
+      <div class="project-detail" id="det-${cid}">
+        <div class="progress-history">${historyHtml}</div>
+      </div>
+    </div>`;
+}
+
+function toggleSharedCard(cid) {
+  const det  = document.getElementById('det-' + cid);
+  const chev = document.getElementById('chev-' + cid);
+  const open = det.classList.toggle('open');
+  chev.classList.toggle('open', open);
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
-render();
-setInterval(render, 60000);
+if (!checkSharedView()) {
+  render();
+  setInterval(render, 60000);
+}
 
 // ─── Service Worker ───────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
