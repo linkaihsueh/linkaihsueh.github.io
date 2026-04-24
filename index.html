@@ -1358,7 +1358,7 @@ function generateShareData(filterId) {
 function openShareModal() {
   const data = generateShareData(activeFilter);
   const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-  const url = `${location.origin}${location.pathname}?share=${encoded}`;
+  const url = `${location.origin}${location.pathname}?share=${encodeURIComponent(encoded)}`;
   document.getElementById('share-url-input').value = url;
   document.getElementById('btn-copy-share').textContent = '📋 複製';
   document.getElementById('modal-share').classList.add('open');
