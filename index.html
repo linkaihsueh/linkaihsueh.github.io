@@ -130,6 +130,69 @@
     }
     .filter-pill-manage:hover { border-color: var(--accent); color: var(--accent); }
 
+    /* ── Search bar ── */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 4px;
+      margin-bottom: 10px;
+    }
+    .search-input-wrap {
+      position: relative;
+      flex: 1;
+    }
+    .search-input-wrap svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      color: var(--secondary);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 7px 32px 7px 32px;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      background: var(--card);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--secondary); }
+    .search-clear {
+      position: absolute;
+      right: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--secondary);
+      color: #fff;
+      font-size: 11px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.6;
+      transition: opacity 0.15s;
+      line-height: 1;
+    }
+    .search-clear:hover { opacity: 1; }
+    .search-result-hint {
+      font-size: 12px;
+      color: var(--secondary);
+      white-space: nowrap;
+    }
+
     /* ── Section headers ── */
     .section-header {
       display: flex;
@@ -727,6 +790,20 @@
     </button>
   </div>
 
+  <!-- Search bar -->
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input class="search-input" id="search-input" type="text"
+             placeholder="搜尋專案名稱或進度紀錄…"
+             oninput="setSearch(this.value)">
+      <button class="search-clear" id="search-clear" onclick="clearSearch()" style="display:none" title="清除搜尋">✕</button>
+    </div>
+    <span class="search-result-hint" id="search-hint"></span>
+  </div>
+
   <!-- Filter bar -->
   <div class="filter-bar" id="filter-bar">
     <!-- rendered by JS -->
@@ -884,6 +961,23 @@ let activeFilter = 'all'; // 'all' | category id
 let selectedCatInAdd = null;
 let selectedCatInChange = null;
 let newCatColor = PALETTE[0];
+let searchQuery = '';
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+function setSearch(q) {
+  searchQuery = q.trim();
+  const clearBtn = document.getElementById('search-clear');
+  if (clearBtn) clearBtn.style.display = searchQuery ? 'flex' : 'none';
+  render();
+}
+function clearSearch() {
+  searchQuery = '';
+  const inp = document.getElementById('search-input');
+  if (inp) inp.value = '';
+  const clearBtn = document.getElementById('search-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  render();
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getCat(id) { return categories.find(c => c.id === id) || null; }
@@ -928,13 +1022,31 @@ function render() {
     : activeFilter === 'uncategorized' ? p.categoryId === null
     : p.categoryId === activeFilter;
 
+  const q = searchQuery.toLowerCase();
+  const searchFn = p => {
+    if (!q) return true;
+    if (p.title.toLowerCase().includes(q)) return true;
+    return p.progress.some(entry => entry.text.toLowerCase().includes(q));
+  };
+
   const active = projects
-    .filter(p => !p.completed && filterFn(p))
+    .filter(p => !p.completed && filterFn(p) && searchFn(p))
     .sort((a, b) => getUpdatedAt(a) - getUpdatedAt(b));
 
   const done = projects
-    .filter(p => p.completed && filterFn(p))
+    .filter(p => p.completed && filterFn(p) && searchFn(p))
     .sort((a, b) => b.completedAt - a.completedAt);
+
+  // Update search hint
+  const hint = document.getElementById('search-hint');
+  if (hint) {
+    if (q) {
+      const total = active.length + done.length;
+      hint.textContent = `找到 ${total} 個專案`;
+    } else {
+      hint.textContent = '';
+    }
+  }
 
   // Active
   const listActive = document.getElementById('list-active');
@@ -1502,3 +1614,4 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+x
