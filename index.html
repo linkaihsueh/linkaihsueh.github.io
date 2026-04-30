@@ -221,7 +221,7 @@
     .section-toggle {
       margin-left: auto;
       color: var(--secondary);
-      font-size: 20px;
+      font-size: 28px;
       transition: transform 0.2s;
     }
     .section-toggle.collapsed { transform: rotate(-90deg); }
@@ -247,6 +247,13 @@
     .project-card.completed-card {
       background: var(--card-completed);
       opacity: 0.75;
+    }
+    .project-card.deferred-card {
+      background: #fffcf0;
+      border-color: rgba(255,149,0,0.18);
+    }
+    .btn-action.deferred-btn {
+      color: #ff9500;
     }
 
     /* Category accent bar on left edge */
@@ -819,6 +826,16 @@
     <div class="project-list" id="list-completed"></div>
   </div>
 
+  <!-- Deferred section -->
+  <div class="section" id="section-deferred" style="display:none">
+    <div class="section-header" onclick="toggleSection('deferred')">
+      <h2>⏸️ 暫緩</h2>
+      <span class="section-count" id="count-deferred">0</span>
+      <span class="section-toggle" id="toggle-deferred">▾</span>
+    </div>
+    <div class="project-list" id="list-deferred"></div>
+  </div>
+
   <!-- Active section -->
   <div class="section">
     <div class="section-header" style="cursor:default">
@@ -957,6 +974,7 @@ let expandedIds = new Set();
 let renameTargetId = null;
 let changeCatTargetId = null;
 let completedSectionOpen = true;
+let deferredSectionOpen = true;
 let activeFilter = 'all'; // 'all' | category id
 let selectedCatInAdd = null;
 let selectedCatInChange = null;
@@ -1030,18 +1048,22 @@ function render() {
   };
 
   const active = projects
-    .filter(p => !p.completed && filterFn(p) && searchFn(p))
+    .filter(p => !p.completed && !p.deferred && filterFn(p) && searchFn(p))
     .sort((a, b) => getUpdatedAt(a) - getUpdatedAt(b));
 
   const done = projects
     .filter(p => p.completed && filterFn(p) && searchFn(p))
     .sort((a, b) => b.completedAt - a.completedAt);
 
+  const deferred = projects
+    .filter(p => !!p.deferred && !p.completed && filterFn(p) && searchFn(p))
+    .sort((a, b) => b.deferredAt - a.deferredAt);
+
   // Update search hint
   const hint = document.getElementById('search-hint');
   if (hint) {
     if (q) {
-      const total = active.length + done.length;
+      const total = active.length + done.length + deferred.length;
       hint.textContent = `找到 ${total} 個專案`;
     } else {
       hint.textContent = '';
@@ -1057,7 +1079,7 @@ function render() {
     : '這個分類沒有進行中的專案';
   listActive.innerHTML = active.length === 0
     ? `<div class="empty-state">
-         <div class="emoji">${activeFilter === 'all' ? '🌱' : '📂'}</div>
+         <div class="emoji">${activeFilter === 'all' ? '🌱' : '📂'}|/div>
          <p>${emptyMsg}</p>
          <small>點擊右上角「新增專案」開始吧！</small>
        </div>`
@@ -1075,6 +1097,20 @@ function render() {
     listCompleted.className = 'project-list' + (completedSectionOpen ? '' : ' hidden');
     document.getElementById('toggle-completed').className =
       'section-toggle' + (completedSectionOpen ? '' : ' collapsed');
+  }
+
+  // Deferred
+  const sectionDeferred = document.getElementById('section-deferred');
+  const listDeferred = document.getElementById('list-deferred');
+  document.getElementById('count-deferred').textContent = deferred.length;
+  if (deferred.length === 0) {
+    sectionDeferred.style.display = 'none';
+  } else {
+    sectionDeferred.style.display = 'block';
+    listDeferred.innerHTML = deferred.map(renderCard).join('');
+    listDeferred.className = 'project-list' + (deferredSectionOpen ? '' : ' hidden');
+    document.getElementById('toggle-deferred').className =
+      'section-toggle' + (deferredSectionOpen ? '' : ' collapsed');
   }
 }
 
@@ -1114,7 +1150,7 @@ function renderCard(p) {
   const isExpanded = expandedIds.has(p.id);
   const lastProgress = p.progress[0];
   const updatedAt = getUpdatedAt(p);
-  const sc = p.completed ? 'stale-none' : stalenessClass(updatedAt);
+  const sc = (p.completed || p.deferred) ? 'stale-none' : stalenessClass(updatedAt);
   const cat = getCat(p.categoryId);
 
   const latestText = lastProgress
@@ -1155,12 +1191,18 @@ function renderCard(p) {
         ${p.completed
           ? `<button class="btn-action" onclick="uncompleteProject('${p.id}',event)">↩️ 重啟</button>`
           : ''}
+        ${p.deferred && !p.completed
+          ? `<button class="btn-action deferred-btn" onclick="undeferProject('${p.id}',event)">▶️ 繼續進行</button>`
+          : ''}
+        ${!p.completed && !p.deferred
+          ? `<button class="btn-action deferred-btn" onclick="deferProject('${p.id}',event)">⏸️ 暫緩</button>`
+          : ''}
         <button class="btn-action danger" onclick="deleteProject('${p.id}',event)">🗑️ 刪除</button>
       </div>
     </div>` : `<div class="project-detail" id="detail-${p.id}"></div>`;
 
   return `
-    <div class="project-card ${p.completed ? 'completed-card' : ''}" id="card-${p.id}">
+    <div class="project-card ${p.completed ? 'completed-card' : p.deferred ? 'deferred-card' : ''}" id="card-${p.id}">
       ${catBarHtml}
       <div class="project-main" onclick="toggleExpand('${p.id}')">
         <div class="project-check ${p.completed ? 'checked' : ''}"
@@ -1173,7 +1215,7 @@ function renderCard(p) {
           <div class="project-latest">${latestText}</div>
           <div class="project-meta">
             <span class="staleness-dot ${sc}"></span>
-            ${p.completed ? `完成於 ${formatTime(p.completedAt)}` : `上次更新：${formatTime(updatedAt)}`}
+            ${p.completed ? `完成於 ${formatTime(p.completedAt)}` : p.deferred ? `暫緩於 ${formatTime(p.deferredAt)}` : `上次更新：${formatTime(updatedAt)}`}
           </div>
         </div>
         <svg class="project-chevron ${isExpanded ? 'open' : ''}" width="16" height="16"
@@ -1289,9 +1331,32 @@ function deleteProgress(projectId, progressId, e) {
   saveAll(); render();
 }
 
+function deferProject(id, e) {
+  e.stopPropagation();
+  const p = projects.find(x => x.id === id);
+  if (!p || p.completed) return;
+  p.deferred = true;
+  p.deferredAt = Date.now();
+  expandedIds.delete(id);
+  saveAll(); render();
+}
+
+function undeferProject(id, e) {
+  e.stopPropagation();
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  p.deferred = false;
+  p.deferredAt = null;
+  saveAll(); render();
+}
+
 function toggleSection(section) {
   if (section === 'completed') {
     completedSectionOpen = !completedSectionOpen;
+    render();
+  }
+  if (section === 'deferred') {
+    deferredSectionOpen = !deferredSectionOpen;
     render();
   }
 }
@@ -1580,7 +1645,7 @@ function renderSharedCard(p, catMap) {
           <div class="project-latest">${latestTxt}</div>
           <div class="project-meta">
             <span class="staleness-dot ${sc}"></span>
-            ${p.completed ? `完成於 ${formatTime(p.completedAt)}` : `上次更新：${formatTime(updatedAt)}`}
+            ${p.completed ? `完成於 ${formatTime(p.completedAt)}` : p.deferred ? `暫緩於 ${formatTime(p.deferredAt)}` : `上次更新：${formatTime(updatedAt)}`}
           </div>
         </div>
         <svg class="project-chevron" id="chev-${cid}" width="16" height="16"
@@ -1614,3 +1679,4 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
