@@ -255,6 +255,24 @@
     .btn-action.deferred-btn {
       color: #ff9500;
     }
+    .project-card.trashed-card {
+      background: #fff5f5;
+      border-color: rgba(255,59,48,0.18);
+      opacity: 0.85;
+    }
+    .btn-action.restore-btn {
+      color: #34c759;
+    }
+    .btn-action.perm-delete-btn {
+      color: #ff3b30;
+      font-weight: 600;
+    }
+    .trash-timer {
+      font-size: 11px;
+      color: #ff3b30;
+      font-weight: 500;
+      margin-left: 2px;
+    }
 
     /* Category accent bar on left edge */
     .project-card { position: relative; }
@@ -826,6 +844,16 @@
     <div class="project-list" id="list-completed"></div>
   </div>
 
+  <!-- Trash section -->
+  <div class="section" id="section-trashed" style="display:none">
+    <div class="section-header" onclick="toggleSection('trashed')">
+      <h2>🗑️ 刪除區</h2>
+      <span class="section-count" id="count-trashed">0</span>
+      <span class="section-toggle" id="toggle-trashed">▾</span>
+    </div>
+    <div class="project-list" id="list-trashed"></div>
+  </div>
+
   <!-- Deferred section -->
   <div class="section" id="section-deferred" style="display:none">
     <div class="section-header" onclick="toggleSection('deferred')">
@@ -975,6 +1003,7 @@ let renameTargetId = null;
 let changeCatTargetId = null;
 let completedSectionOpen = true;
 let deferredSectionOpen = true;
+let trashedSectionOpen = true;
 let activeFilter = 'all'; // 'all' | category id
 let selectedCatInAdd = null;
 let selectedCatInChange = null;
@@ -1048,16 +1077,20 @@ function render() {
   };
 
   const active = projects
-    .filter(p => !p.completed && !p.deferred && filterFn(p) && searchFn(p))
+    .filter(p => !p.completed && !p.deferred && !p.trashed && filterFn(p) && searchFn(p))
     .sort((a, b) => getUpdatedAt(a) - getUpdatedAt(b));
 
   const done = projects
-    .filter(p => p.completed && filterFn(p) && searchFn(p))
+    .filter(p => p.completed && !p.trashed && filterFn(p) && searchFn(p))
     .sort((a, b) => b.completedAt - a.completedAt);
 
   const deferred = projects
-    .filter(p => !!p.deferred && !p.completed && filterFn(p) && searchFn(p))
+    .filter(p => !!p.deferred && !p.completed && !p.trashed && filterFn(p) && searchFn(p))
     .sort((a, b) => b.deferredAt - a.deferredAt);
+
+  const trashed = projects
+    .filter(p => !!p.trashed)
+    .sort((a, b) => b.deletedAt - a.deletedAt);
 
   // Update search hint
   const hint = document.getElementById('search-hint');
@@ -1079,7 +1112,7 @@ function render() {
     : '這個分類沒有進行中的專案';
   listActive.innerHTML = active.length === 0
     ? `<div class="empty-state">
-         <div class="emoji">${activeFilter === 'all' ? '🌱' : '📂'}|/div>
+         <div class="emoji">${activeFilter === 'all' ? '🌱' : '📂'}</div>
          <p>${emptyMsg}</p>
          <small>點擊右上角「新增專案」開始吧！</small>
        </div>`
@@ -1111,6 +1144,20 @@ function render() {
     listDeferred.className = 'project-list' + (deferredSectionOpen ? '' : ' hidden');
     document.getElementById('toggle-deferred').className =
       'section-toggle' + (deferredSectionOpen ? '' : ' collapsed');
+  }
+
+  // Trashed
+  const sectionTrashed = document.getElementById('section-trashed');
+  const listTrashed = document.getElementById('list-trashed');
+  document.getElementById('count-trashed').textContent = trashed.length;
+  if (trashed.length === 0) {
+    sectionTrashed.style.display = 'none';
+  } else {
+    sectionTrashed.style.display = 'block';
+    listTrashed.innerHTML = trashed.map(renderCard).join('');
+    listTrashed.className = 'project-list' + (trashedSectionOpen ? '' : ' hidden');
+    document.getElementById('toggle-trashed').className =
+      'section-toggle' + (trashedSectionOpen ? '' : ' collapsed');
   }
 }
 
@@ -1150,7 +1197,7 @@ function renderCard(p) {
   const isExpanded = expandedIds.has(p.id);
   const lastProgress = p.progress[0];
   const updatedAt = getUpdatedAt(p);
-  const sc = (p.completed || p.deferred) ? 'stale-none' : stalenessClass(updatedAt);
+  const sc = (p.completed || p.deferred || p.trashed) ? 'stale-none' : stalenessClass(updatedAt);
   const cat = getCat(p.categoryId);
 
   const latestText = lastProgress
@@ -1186,23 +1233,28 @@ function renderCard(p) {
       </div>` : ''}
       <div class="progress-history">${historyHtml}</div>
       <div class="project-actions">
-        <button class="btn-action" onclick="openRenameModal('${p.id}',event)">✏️ 重新命名</button>
-        <button class="btn-action" onclick="openChangeCat('${p.id}',event)">🏷️ ${cat ? '變更' : '設定'}分類</button>
-        ${p.completed
-          ? `<button class="btn-action" onclick="uncompleteProject('${p.id}',event)">↩️ 重啟</button>`
-          : ''}
-        ${p.deferred && !p.completed
-          ? `<button class="btn-action deferred-btn" onclick="undeferProject('${p.id}',event)">▶️ 繼續進行</button>`
-          : ''}
-        ${!p.completed && !p.deferred
-          ? `<button class="btn-action deferred-btn" onclick="deferProject('${p.id}',event)">⏸️ 暫緩</button>`
-          : ''}
-        <button class="btn-action danger" onclick="deleteProject('${p.id}',event)">🗑️ 刪除</button>
+        ${p.trashed ? `
+          <button class="btn-action restore-btn" onclick="restoreFromTrash('${p.id}',event)">♻️ 還原</button>
+          <button class="btn-action perm-delete-btn" onclick="permanentDelete('${p.id}',event)">💀 永久刪除</button>
+        ` : `
+          <button class="btn-action" onclick="openRenameModal('${p.id}',event)">✏️ 重新命名</button>
+          <button class="btn-action" onclick="openChangeCat('${p.id}',event)">🏷️ ${cat ? '變更' : '設定'}分類</button>
+          ${p.completed
+            ? `<button class="btn-action" onclick="uncompleteProject('${p.id}',event)">↩️ 重啟</button>`
+            : ''}
+          ${p.deferred && !p.completed
+            ? `<button class="btn-action deferred-btn" onclick="undeferProject('${p.id}',event)">▶️ 繼續進行</button>`
+            : ''}
+          ${!p.completed && !p.deferred
+            ? `<button class="btn-action deferred-btn" onclick="deferProject('${p.id}',event)">⏸️ 暫緩</button>`
+            : ''}
+          <button class="btn-action danger" onclick="deleteProject('${p.id}',event)">🗑️ 刪除</button>
+        `}
       </div>
     </div>` : `<div class="project-detail" id="detail-${p.id}"></div>`;
 
   return `
-    <div class="project-card ${p.completed ? 'completed-card' : p.deferred ? 'deferred-card' : ''}" id="card-${p.id}">
+    <div class="project-card ${p.trashed ? 'trashed-card' : p.completed ? 'completed-card' : p.deferred ? 'deferred-card' : ''}" id="card-${p.id}">
       ${catBarHtml}
       <div class="project-main" onclick="toggleExpand('${p.id}')">
         <div class="project-check ${p.completed ? 'checked' : ''}"
@@ -1215,7 +1267,7 @@ function renderCard(p) {
           <div class="project-latest">${latestText}</div>
           <div class="project-meta">
             <span class="staleness-dot ${sc}"></span>
-            ${p.completed ? `完成於 ${formatTime(p.completedAt)}` : p.deferred ? `暫緩於 ${formatTime(p.deferredAt)}` : `上次更新：${formatTime(updatedAt)}`}
+            ${p.trashed ? `🗑️ 刪於 ${formatTime(p.deletedAt)} <span class="trash-timer">(${trashCountdown(p.deletedAt)}後永久刪除)</span>` : p.completed ? `完成於 ${formatTime(p.completedAt)}` : p.deferred ? `暫緩於 ${formatTime(p.deferredAt)}` : `上次更新：${formatTime(updatedAt)}`}
           </div>
         </div>
         <svg class="project-chevron ${isExpanded ? 'open' : ''}" width="16" height="16"
@@ -1300,10 +1352,44 @@ function uncompleteProject(id, e) {
 function deleteProject(id, e) {
   e.stopPropagation();
   const p = projects.find(x => x.id === id);
-  if (!p || !confirm(`確定要刪除「${p.title}」嗎？`)) return;
+  if (!p) return;
+  p.trashed = true;
+  p.deletedAt = Date.now();
+  expandedIds.delete(id);
+  saveAll(); render();
+}
+
+function permanentDelete(id, e) {
+  e.stopPropagation();
+  const p = projects.find(x => x.id === id);
+  if (!p || !confirm(`確定要永久刪除「${p.title}」嗎？此操作無法復原。`)) return;
   projects = projects.filter(x => x.id !== id);
   expandedIds.delete(id);
   saveAll(); render();
+}
+
+function restoreFromTrash(id, e) {
+  e.stopPropagation();
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  p.trashed = false;
+  p.deletedAt = null;
+  saveAll(); render();
+}
+
+function trashCountdown(deletedAt) {
+  const remaining = (deletedAt + 24 * 60 * 60 * 1000) - Date.now();
+  if (remaining <= 0) return '0 小時';
+  const hours = Math.floor(remaining / 3600000);
+  const mins = Math.floor((remaining % 3600000) / 60000);
+  return hours > 0 ? `${hours} 小時 ${mins} 分` : `${mins} 分鐘`;
+}
+
+function cleanupTrash() {
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const before = projects.length;
+  projects = projects.filter(p => !(p.trashed && p.deletedAt && p.deletedAt < cutoff));
+  if (projects.length !== before) { saveAll(); render(); }
 }
 
 function addProgress(id) {
@@ -1351,14 +1437,9 @@ function undeferProject(id, e) {
 }
 
 function toggleSection(section) {
-  if (section === 'completed') {
-    completedSectionOpen = !completedSectionOpen;
-    render();
-  }
-  if (section === 'deferred') {
-    deferredSectionOpen = !deferredSectionOpen;
-    render();
-  }
+  if (section === 'completed') { completedSectionOpen = !completedSectionOpen; render(); }
+  if (section === 'deferred') { deferredSectionOpen = !deferredSectionOpen; render(); }
+  if (section === 'trashed') { trashedSectionOpen = !trashedSectionOpen; render(); }
 }
 
 // ─── Modals ───────────────────────────────────────────────────────────────────
@@ -1474,7 +1555,7 @@ function deleteCat(id) {
   if (!c) return;
   const count = projects.filter(p => p.categoryId === id).length;
   const msg = count > 0
-    ? `刪除「${c.name}」分類後，${count} 個專案將變為無分類。確定嗎？`
+    ? `刪除「${c.name}」分類後，${count} 個專案就變為無分類。確定嗎？`
     : `確定刪除「${c.name}」分類嗎？`;
   if (!confirm(msg)) return;
   categories = categories.filter(x => x.id !== id);
@@ -1668,8 +1749,10 @@ function toggleSharedCard(cid) {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 if (!checkSharedView()) {
+  cleanupTrash();          // 頁面載入時先清除過期項目
   render();
   setInterval(render, 60000);
+  setInterval(cleanupTrash, 60 * 60 * 1000); // 每小時自動清一次
 }
 
 // ─── Service Worker ───────────────────────────────────────────────────────────
