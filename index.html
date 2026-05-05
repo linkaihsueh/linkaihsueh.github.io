@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
@@ -1001,8 +1001,8 @@ let { projects, categories } = loadAll();
 let expandedIds = new Set();
 let renameTargetId = null;
 let changeCatTargetId = null;
-let completedSectionOpen = true;
-let deferredSectionOpen = true;
+let completedSectionOpen = false;
+let deferredSectionOpen = false;
 let trashedSectionOpen = true;
 let activeFilter = 'all'; // 'all' | category id
 let selectedCatInAdd = null;
@@ -1555,7 +1555,7 @@ function deleteCat(id) {
   if (!c) return;
   const count = projects.filter(p => p.categoryId === id).length;
   const msg = count > 0
-    ? `刪除「${c.name}」分類後，${count} 個專案就變為無分類。確定嗎？`
+    ? `刪除「${c.name}」分類後，${count} 個專案將變為無分類。確定嗎？`
     : `確定刪除「${c.name}」分類嗎？`;
   if (!confirm(msg)) return;
   categories = categories.filter(x => x.id !== id);
@@ -1751,7 +1751,12 @@ function toggleSharedCard(cid) {
 if (!checkSharedView()) {
   cleanupTrash();          // 頁面載入時先清除過期項目
   render();
-  setInterval(render, 60000);
+  setInterval(() => {
+    // 若使用者正在輸入進度，跳過此次渲染避免文字消失
+    const active = document.activeElement;
+    if (active && active.id && active.id.startsWith('input-progress-')) return;
+    render();
+  }, 60000);
   setInterval(cleanupTrash, 60 * 60 * 1000); // 每小時自動清一次
 }
 
@@ -1762,4 +1767,3 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
-
