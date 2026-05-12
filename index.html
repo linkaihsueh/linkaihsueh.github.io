@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
@@ -953,6 +953,28 @@
   </div>
 </div>
 
+
+<!-- ── Backup Modal ── -->
+<div class="modal-overlay" id="modal-backup">
+  <div class="modal">
+    <h3>💾 備份與還原</h3>
+    <p style="font-size:13px;color:var(--secondary);margin-bottom:16px">
+      將所有資料（專案、分類、進度記錄）匯出為 JSON 檔案，或從備份檔還原。
+    </p>
+    <div style="display:flex;gap:10px;margin-bottom:20px">
+      <button class="btn-modal primary" onclick="exportBackup()" style="flex:1">📥 匯出備份</button>
+      <label class="btn-modal primary" style="flex:1;text-align:center;cursor:pointer;padding:10px 0;border-radius:10px;background:#007aff;color:#fff;font-size:14px;font-weight:600">
+        📤 匯入備份
+        <input type="file" id="import-file-input" accept=".json" style="display:none" onchange="importBackup(event)">
+      </label>
+    </div>
+    <div id="backup-status" style="font-size:12px;color:var(--secondary);text-align:center;min-height:18px"></div>
+    <div class="modal-actions">
+      <button class="btn-modal cancel" onclick="closeModal('modal-backup')">關閉</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── Constants ────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'project-tracker-v2';
@@ -1190,6 +1212,7 @@ function renderFilterBar() {
   }
   html += `<button class="filter-pill-manage" onclick="openManageCats()">⚙️ 管理分類</button>`;
   html += `<button class="filter-pill-share" onclick="openShareModal()">📤 分享</button>`;
+  html += `<button class="filter-pill-share" onclick="openBackupModal()">💾 備份</button>`;
   bar.innerHTML = html;
 }
 
@@ -1555,7 +1578,7 @@ function deleteCat(id) {
   if (!c) return;
   const count = projects.filter(p => p.categoryId === id).length;
   const msg = count > 0
-    ? `刪除「${c.name}」分類後，${count} 個專案將變為無分類。確定嗎？`
+    ? `刪除「${c.name}」分類後，${count} 個專案將變為無分類8��確定嗎？`
     : `確定刪除「${c.name}」分類嗎？`;
   if (!confirm(msg)) return;
   categories = categories.filter(x => x.id !== id);
@@ -1702,7 +1725,7 @@ function renderSharedCard(p, catMap) {
   const sc        = p.completed ? 'stale-none' : stalenessClass(updatedAt);
 
   const historyHtml = (!p.progress || p.progress.length === 0)
-    ? `<div class="progress-empty">尚無進度紀錄</div>`
+    ? `"<div class="progress-empty">尚無進度紀錄</div>`
     : p.progress.map(pg => `
         <div class="progress-item">
           <div class="progress-dot"></div>
@@ -1747,6 +1770,89 @@ function toggleSharedCard(cid) {
   chev.classList.toggle('open', open);
 }
 
+
+// ─── Backup / Restore ──────────────────────────────────────────────────────────
+const BACKUP_REMINDER_KEY = 'project-tracker-last-backup';
+
+function openBackupModal() {
+  const last = localStorage.getItem(BACKUP_REMINDER_KEY);
+  const el = document.getElementById('backup-status');
+  if (el) el.textContent = last ? `上次備份：${new Date(Number(last)).toLocaleString('zh-TW')}` : '尚暫備份過';
+  document.getElementById('modal-backup').classList.add('open');
+}
+
+function exportBackup() {
+  const data = { v: 2, exportedAt: Date.now(), projects, categories };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  a.href = url;
+  a.download = `專案備份_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now()));
+  const el = document.getElementById('backup-status');
+  if (el) el.textContent = '✅ WB�份�n下載ぁ';
+}
+
+function importBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.projects || !Array.isArray(data.projects)) throw new Error('怼式錫誤');
+      if (!confirm(`磺定要還原備份知？\n這會蘆��目前所有��料（${data.projects.length} 個專案）。\n此操作無法復原。
+) return;
+      projects = data.projects;
+      categories = data.categories || [];
+      saveAll();
+      render();
+      closeModal('modal-backup');
+      alert('✅ 資料已成功還原！');
+    } catch(err) {
+      alert('❌ 匯入失敗：' + err.message + '\n請確認是正確的備份檔案。');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function checkBackupReminder() {
+  const last = localStorage.getItem(BACKUP_REMINDER_KEY);
+  const now = Date.now();
+  const sevenDays = 7 * 24 * 60 * 60 * 1000;
+  if (!last || (now - Number(last)) > sevenDays) {
+    const msg = last
+      ? `距離上次備份已超過 7 天，建議備份一下！`
+      : `你還沒有備份過資料，建議先備份！`;
+    // Show a non-intrusive banner instead of alert
+    showBackupBanner(msg);
+  }
+}
+
+function showBackupBanner(msg) {
+  let banner = document.getElementById('backup-banner');
+  if (banner) return; // already showing
+  banner = document.createElement('div');
+  banner.id = 'backup-banner';
+  banner.innerHTML = `<span>💾 ${msg}</span><button onclick="openBackupModal();this.parentElement.remove()">立即備份</button><button onclick="dismissBackupReminder(this)">稍後再說</button>`;
+  banner.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1c1c1e;color:#fff;padding:12px 16px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:90vw';
+  banner.querySelectorAll('button').forEach(b => {
+    b.style.cssText = 'background:#007aff;color:#fff;border:none;padding:6px 12px;border-radius:7px;font-size:12px;cursor:pointer;white-space:nowrap';
+    b.nextElementSibling && (b.nextElementSibling.style.background = '#636366');
+  });
+  document.body.appendChild(banner);
+}
+
+function dismissBackupReminder(btn) {
+  btn.closest('#backup-banner').remove();
+  // Snooze for 3 days
+  localStorage.setItem(BACKUP_REMINDER_KEY, String(Date.now() - (4 * 24 * 60 * 60 * 1000)));
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 if (!checkSharedView()) {
   cleanupTrash();          // 頁面載入時先清除過期項目
@@ -1758,6 +1864,7 @@ if (!checkSharedView()) {
     render();
   }, 60000);
   setInterval(cleanupTrash, 60 * 60 * 1000); // 每小時自動清一次
+  setTimeout(checkBackupReminder, 3000); // 延遲 3 秒再提醒，避免干擾載入
 }
 
 // ─── Service Worker ───────────────────────────────────────────────────────────
