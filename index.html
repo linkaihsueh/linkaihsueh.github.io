@@ -1165,8 +1165,17 @@ function render() {
     listDeferred.innerHTML = deferred.map(renderCard).join('');
     listDeferred.className = 'project-list' + (deferredSectionOpen ? '' : ' hidden');
     document.getElementById('toggle-deferred').className =
-      'section-toggle' + (deferredSectionOpen ?�w ����耜�������͕����(���((�����QɅ͡��(������Ё͕�ѥ��QɅ͡���􁑽�յ��й���������	�%���͕�ѥ����Ʌ͡�����(������Ё����QɅ͡���􁑽�յ��й���������	�%������е�Ʌ͡�����(�����յ��й���������	�%�����չе�Ʌ͡�����ѕ��
-��ѕ�Ѐ��Ʌ͡�������Ѡ�(�������Ʌ͡�������Ѡ��������(����͕�ѥ��QɅ͡�����屔��������􀝹�����(��􁕱͔��(����͕�ѥ��QɅ͡��yle.display = 'block';
+      'section-toggle' + (deferredSectionOpen ? '' : ' collapsed');
+  }
+
+  // Trashed
+  const sectionTrashed = document.getElementById('section-trashed');
+  const listTrashed = document.getElementById('list-trashed');
+  document.getElementById('count-trashed').textContent = trashed.length;
+  if (trashed.length === 0) {
+    sectionTrashed.style.display = 'none';
+  } else {
+    sectionTrashed.style.display = 'block';
     listTrashed.innerHTML = trashed.map(renderCard).join('');
     listTrashed.className = 'project-list' + (trashedSectionOpen ? '' : ' hidden');
     document.getElementById('toggle-trashed').className =
@@ -1201,7 +1210,7 @@ function renderFilterBar() {
       未分類${uncatActive > 0 ? ` <span style="opacity:.7">${uncatActive}</span>` : ''}
     </button>`;
   }
-  html += `<button class="filter-pill-manage" onclick="openManageCats()">ښ�️ 管理分類</button>`;
+  html += `<button class="filter-pill-manage" onclick="openManageCats()">⚙️ 管理分類</button>`;
   html += `<button class="filter-pill-share" onclick="openShareModal()">📤 分享</button>`;
   html += `<button class="filter-pill-share" onclick="openBackupModal()">💾 備份</button>`;
   bar.innerHTML = html;
@@ -1293,7 +1302,7 @@ function renderCard(p) {
     </div>`;
 }
 
-// ─── Category picker HTML ─────────────────────────────────────────────────────
+// ─── Category picker HTML ──────────────────────────────────────────────────────
 function buildCatPicker(containerId, selectedId) {
   const container = document.getElementById(containerId);
   let html = `<div class="cat-pick-item none-item ${!selectedId ? 'selected' : ''}"
@@ -1360,7 +1369,7 @@ function uncompleteProject(id, e) {
   if (!p) return;
   p.completed = false;
   p.completedAt = null;
-  saveAveAll(); render();
+  saveAll(); render();
 }
 
 function deleteProject(id, e) {
@@ -1569,42 +1578,71 @@ function deleteCat(id) {
   if (!c) return;
   const count = projects.filter(p => p.categoryId === id).length;
   const msg = count > 0
-    ? `刪除「${c.name}」分類後，${count} 個專案將變為無分類8� ���9讹k��b*�fi8�#	�˛�[Y_x�#yb!�hg�e��'�Y�
-X�ۙ�\�J\��JH�]\���]Y�ܚY\�H�]Y�ܚY\˙�[\�O��YOOHY
-N�ڙX�˙�ܑXX�
-O��Y�
-��]Y�ܞRYOOHY
-H��]Y�ܞRYH�[�JNY�
-X�]�Q�[\�OOHY
-HX�]�Q�[\�H	�[	��]�P[
+    ? `刪除「${c.name}」分類後，${count} 個專案將變為無分類。確定嗎？`
+    : `確定刪除「${c.name}」分類</div>`;
+  if (!confirm(msg)) return;
+  categories = categories.filter(x => x.id !== id);
+  projects.forEach(p => { if (p.categoryId === id) p.categoryId = null; });
+  if (activeFilter === id) activeFilter = 'all';
+  saveAll();
+  renderManageCats();
+  render();
+}
 
-N�[�\�X[�Y�P�]�
-N�[�\�
-NB���[��[ۈ���S[�[
-Y
-H��[Y[���][[Y[��RY
-Y
-K��\��\���[[ݙJ	��[��NB����[Y[��]Y\�T�[X�ܐ[
-	˛[�[[ݙ\�^I�K��ܑXX�
-ݙ\�^HO�ݙ\�^K�Y]�[�\�[�\�	��X���HO�Y�
-K�\��]OOHݙ\�^JHݙ\�^K��\��\���[[ݙJ	��[��NJNJN���8� 8� 8� �\�H�^ܝ8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� ��[��[ۈ�[�\�]T�\�Q]J�[\�Y
-H]�]�[YK�]��܎Y�
-�[\�YOOH	�[	�H�]�[YHH	�aj:`�9l"9�b	���]��܈H	��X�X�YI�H[�HY�
-�[\�YOOH	�[��]Y�ܚ^�Y	�H�]�[YHH	��*�b!�hg�l"9�b	���]��܈H	�͍͌͌��H[�H�ۜ��]H�]�]
-�[\�Y
-N�]�[YHH�]��]��[YH�	��*���yb!�hg���]��܈H�]��]���܈�	��NNL��B��ۜ���HO���[\�YOOH	�[	���YB���[\�YOOH	�[��]Y�ܚ^�Y	����]Y�ܞRYOOH�[����]Y�ܞRYOOH�[\�Y����Z[�]Y�ܞH���\�܈[��YY�ڙX��ۜ��]X\H�N�܈
-�ۜ��و�]Y�ܚY\�H�]X\�˚YHH��[YN�˛�[YK��܎�˘��܈N��]\����K��]�[YK�]��܋�^ܝY]�]K����
-K��]Y�ܚY\Έ�]X\��ڙX�Έ�ڙX�˙�[\���K�X\
-O�
-]N��]K���\]Y����\]Y���\]Y]����\]Y]�ܙX]Y]��ܙX]Y]��]Y�ܞRY���]Y�ܞRY���ܙ\�Έ���ܙ\�JJB�NB���[��[ۈ�[��\�S[�[
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
 
-H�ۜ�]HH�[�\�]T�\�Q]JX�]�Q�[\�N�ۜ�[���YH��J[�\��\J[���UT�P��\ۙ[�
-��Ӌ���[��Y�J]JJJJN�ۜ�\�H	���][ۋ�ܚY�[�I���][ۋ�]�[Y_O��\�OI�[���UT�P��\ۙ[�
-[���Y
-_X��[Y[���][[Y[��RY
-	��\�K]\�Z[�]	�K��[YHH\���[Y[���][[Y[��RY
-	؝�X��K\�\�I�K�^�۝[�H	�'���:)!�(�I���[Y[���][[Y[��RY
-	�[�[\�\�I�K�dal-share').classList.add('open');
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// ─── Share / Export ──────────────────────────────────────────────────────────────────────────
+function generateShareData(filterId) {
+  let catName, catColor;
+  if (filterId === 'all') {
+    catName = '全部專案'; catColor = '#1c1c1e';
+  } else if (filterId === 'uncategorized') {
+    catName = '未分類專案'; catColor = '#636366';
+  } else {
+    const cat = getCat(filterId);
+    catName = cat ? cat.name : '未知分類';
+    catColor = cat ? cat.color : '#8e8e93';
+  }
+  const fn = p =>
+    filterId === 'all'           ? true
+    : filterId === 'uncategorized' ? p.categoryId === null
+    : p.categoryId === filterId;
+
+  // Build category lookup for included projects
+  const catMap = {};
+  for (const c of categories) catMap[c.id] = { name: c.name, color: c.color };
+
+  return {
+    v: 1,
+    catName, catColor,
+    exportedAt: Date.now(),
+    categories: catMap,
+    projects: projects.filter(fn).map(p => ({
+      title: p.title,
+      completed: p.completed,
+      completedAt: p.completedAt,
+      createdAt: p.createdAt,
+      categoryId: p.categoryId,
+      progress: p.progress
+    }))
+  };
+}
+
+function openShareModal() {
+  const data = generateShareData(activeFilter);
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const url = `${location.origin}${location.pathname}?share=${encodeURIComponent(encoded)}`;
+  document.getElementById('share-url-input').value = url;
+  document.getElementById('btn-copy-share').textContent = '📋 複製';
+  document.getElementById('modal-share').classList.add('open');
   setTimeout(() => document.getElementById('share-url-input').select(), 100);
 }
 
@@ -1614,13 +1652,13 @@ function copyShareUrl() {
   navigator.clipboard.writeText(input.value).then(() => {
     const btn = document.getElementById('btn-copy-share');
     btn.textContent = '✅ 已複製！';
-    setTimeout(() => btn.textContent = '📋 複製', 2500);
+    setT 2500);
   }).catch(() => {
     document.execCommand('copy');
   });
 }
 
-// ─── Shared read-only view ───────────────────────────────────────────────────
+// ─── Shared read-only view ────────────────────────────────────────────────────
 function checkSharedView() {
   const params = new URLSearchParams(location.search);
   const encoded = params.get('share');
@@ -1642,7 +1680,7 @@ function renderSharedView(data) {
   const activeHtml = active.length === 0 ? '' : `
     <div class="section">
       <div class="section-header" style="cursor:default">
-        <h2>🔥 進行中</h2>
+        <h2>🔥 進行$��</h2>
         <span class="section-count">${active.length}</span>
       </div>
       <div class="project-list">${active.map(p => renderSharedCard(p, data.categories)).join('')}</div>
@@ -1687,17 +1725,19 @@ function renderSharedCard(p, catMap) {
   const sc        = p.completed ? 'stale-none' : stalenessClass(updatedAt);
 
   const historyHtml = (!p.progress || p.progress.length === 0)
-    ? `${cid}">
-      ${catBar}
-      <div class="project-main" onclick="toggleSharedCard('${cid}')">
-        <div class="project-check ${p.completed ? 'checked' : ''}" style="pointer-events:none;cursor:default"></div>
-        <div class="project-body">
-          <div class="project-title-row">
-            <div class="project-title ${p.completed ? 'done' : ''}">${escHtml(p.title)}</div>
-            ${catBadge}
+    ? `<div class="progress-empty">尚無進度紀錄</div>`
+    : p.progress.map(pg => `
+        <div class="progress-item">
+          <div class="progress-dot"></div>
+          <div class="progress-content">
+            <div class="progress-text">${escHtml(pg.text)}</div>
+            <div class="progress-time">${formatDate(pg.createdAt)}</div>
           </div>
-          <div class="project-latest">${latestTxt}</div>
-          <div class=d ? 'completed-card' : ''}" id="${cid}">
+        </div>`).join('');
+
+  const cid = 'sc' + Math.random().toString(36).slice(2, 8);
+  return `
+    <div class="project-card ${p.completed ? 'completed-card' : ''}" id="${cid}">
       ${catBar}
       <div class="project-main" onclick="toggleSharedCard('${cid}')">
         <div class="project-check ${p.completed ? 'checked' : ''}" style="pointer-events:none;cursor:default"></div>
