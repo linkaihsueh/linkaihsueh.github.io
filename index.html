@@ -1579,7 +1579,7 @@ function deleteCat(id) {
   const count = projects.filter(p => p.categoryId === id).length;
   const msg = count > 0
     ? `刪除「${c.name}」分類後，${count} 個專案將變為無分類。確定嗎？`
-    : `確定刪除「${c.name}」分類</div>`;
+    : `確定刪除「${c.name}」分類嗎？`;
   if (!confirm(msg)) return;
   categories = categories.filter(x => x.id !== id);
   projects.forEach(p => { if (p.categoryId === id) p.categoryId = null; });
@@ -1599,7 +1599,7 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   });
 });
 
-// ─── Share / Export ──────────────────────────────────────────────────────────────────────────
+// ─── Share / Export ───────────────────────────────────────────────────────────
 function generateShareData(filterId) {
   let catName, catColor;
   if (filterId === 'all') {
@@ -1652,7 +1652,7 @@ function copyShareUrl() {
   navigator.clipboard.writeText(input.value).then(() => {
     const btn = document.getElementById('btn-copy-share');
     btn.textContent = '✅ 已複製！';
-    setT 2500);
+    setTimeout(() => btn.textContent = '📋 複製', 2500);
   }).catch(() => {
     document.execCommand('copy');
   });
@@ -1680,7 +1680,7 @@ function renderSharedView(data) {
   const activeHtml = active.length === 0 ? '' : `
     <div class="section">
       <div class="section-header" style="cursor:default">
-        <h2>🔥 進行$��</h2>
+        <h2>🔥 進行中</h2>
         <span class="section-count">${active.length}</span>
       </div>
       <div class="project-list">${active.map(p => renderSharedCard(p, data.categories)).join('')}</div>
